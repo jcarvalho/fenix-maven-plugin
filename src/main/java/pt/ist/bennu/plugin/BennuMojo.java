@@ -52,88 +52,89 @@ public class BennuMojo extends AbstractMojo {
 
     @Override
     public void execute() throws MojoExecutionException {
-	if (mavenProject.getArtifact().getType().equals("pom"))
-	    return;
-	try {
-	    if (webFragment.exists()) {
-		String template = FileUtils.readFileToString(webFragment);
-		int start = template.indexOf(TEMPLATE_START);
-		int numSpaces = getIndentation(template, start);
-		if (start != -1) {
-		    int end = template.indexOf(TEMPLATE_END, start);
-		    if (end != -1) {
-			try (PrintWriter printWriter = new PrintWriter(webFragment)) {
-			    printWriter.append(template.substring(0, start + TEMPLATE_START.length()));
-			    printWriter.append(NEW_LINE_CHAR);
-			    printWriter.append(getModuleDependenciesAsStrings(numSpaces));
-			    printWriter.append(template.substring(end));
-			}
-		    } else {
-			throw new MojoExecutionException("Missing template end comment: " + TEMPLATE_END);
-		    }
-		} else {
-		    throw new MojoExecutionException("Missing template start comment: " + TEMPLATE_START);
-		}
-	    } else {
-		getLog().info("File: " + webFragment.getAbsolutePath() + " not found. No depency injection could be made");
-	    }
-	} catch (IOException e) {
-	    throw new MojoExecutionException(null, e);
-	}
+        if (mavenProject.getArtifact().getType().equals("pom"))
+            return;
+        try {
+            if (webFragment.exists()) {
+                String template = FileUtils.readFileToString(webFragment);
+                int start = template.indexOf(TEMPLATE_START);
+                int numSpaces = getIndentation(template, start);
+                if (start != -1) {
+                    int end = template.indexOf(TEMPLATE_END, start);
+                    if (end != -1) {
+                        try (PrintWriter printWriter = new PrintWriter(webFragment)) {
+                            printWriter.append(template.substring(0, start + TEMPLATE_START.length()));
+                            printWriter.append(NEW_LINE_CHAR);
+                            printWriter.append(getModuleDependenciesAsStrings(numSpaces));
+                            printWriter.append(template.substring(end));
+                        }
+                    } else {
+                        throw new MojoExecutionException("Missing template end comment: " + TEMPLATE_END);
+                    }
+                } else {
+                    throw new MojoExecutionException("Missing template start comment: " + TEMPLATE_START);
+                }
+            } else {
+                getLog().info("File: " + webFragment.getAbsolutePath() + " not found. No depency injection could be made");
+            }
+        } catch (IOException e) {
+            throw new MojoExecutionException(null, e);
+        }
 
-	List<Resource> resources = mavenProject.getResources();
-	StringBuilder messages = new StringBuilder();
-	for (Resource resource : resources) {
-	    DirectoryScanner scanner = new DirectoryScanner();
-	    scanner.setBasedir(resource.getDirectory());
-	    scanner.setIncludes(new String[] { "resources/*.properties" });
-	    scanner.scan();
+        List<Resource> resources = mavenProject.getResources();
+        StringBuilder messages = new StringBuilder();
+        for (Resource resource : resources) {
+            DirectoryScanner scanner = new DirectoryScanner();
+            scanner.setBasedir(resource.getDirectory());
+            scanner.setIncludes(new String[] { "resources/*.properties" });
+            scanner.scan();
 
-	    for (String resourceFile : scanner.getIncludedFiles()) {
-		if (!resourceFile.contains("_")) {
-		    messages.append(resourceFile.substring("resources/".length(), resourceFile.length() - ".properties".length()));
-		    messages.append("\n");
-		}
-	    }
-	}
-	String output = mavenProject.getBuild().getOutputDirectory() + File.separatorChar + mavenProject.getArtifactId()
-		+ File.separatorChar + ".messageResources";
-	try {
-	    FileUtils.writeStringToFile(new File(output), messages.toString(), "UTF-8");
-	} catch (IOException e) {
-	    throw new MojoExecutionException(null, e);
-	}
+            for (String resourceFile : scanner.getIncludedFiles()) {
+                if (!resourceFile.contains("_")) {
+                    messages.append(resourceFile.substring("resources/".length(), resourceFile.length() - ".properties".length()));
+                    messages.append("\n");
+                }
+            }
+        }
+        String output =
+                mavenProject.getBuild().getOutputDirectory() + File.separatorChar + mavenProject.getArtifactId()
+                        + File.separatorChar + ".messageResources";
+        try {
+            FileUtils.writeStringToFile(new File(output), messages.toString(), "UTF-8");
+        } catch (IOException e) {
+            throw new MojoExecutionException(null, e);
+        }
     }
 
     public String getModuleDependenciesAsStrings(int indentation) throws MojoExecutionException {
-	StringBuilder stringBuilder = new StringBuilder();
-	String indentSpace = StringUtils.repeat(" ", indentation - 1);
-	for (Artifact artifact : mavenProject.getArtifacts()) {
-	    if (isWebModule(artifact)) {
-		stringBuilder.append(indentSpace);
-		stringBuilder.append(OPEN_NAME_TAG);
-		stringBuilder.append(artifact.getArtifactId());
-		stringBuilder.append(CLOSE_NAME_TAG);
-		stringBuilder.append(NEW_LINE_CHAR);
-	    }
-	}
-	stringBuilder.append(indentSpace);
-	return stringBuilder.toString();
+        StringBuilder stringBuilder = new StringBuilder();
+        String indentSpace = StringUtils.repeat(" ", indentation - 1);
+        for (Artifact artifact : mavenProject.getArtifacts()) {
+            if (isWebModule(artifact)) {
+                stringBuilder.append(indentSpace);
+                stringBuilder.append(OPEN_NAME_TAG);
+                stringBuilder.append(artifact.getArtifactId());
+                stringBuilder.append(CLOSE_NAME_TAG);
+                stringBuilder.append(NEW_LINE_CHAR);
+            }
+        }
+        stringBuilder.append(indentSpace);
+        return stringBuilder.toString();
     }
 
     public boolean isWebModule(Artifact artifact) throws MojoExecutionException {
-	if (artifact.getType().equals("pom")) {
-	    return false;
-	}
-	try (JarFile artifactJar = new JarFile(artifact.getFile())) {
-	    JarEntry webFragmentFile = artifactJar.getJarEntry("META-INF/web-fragment.xml");
-	    return webFragmentFile != null;
-	} catch (IOException ex) {
-	    throw new MojoExecutionException("Could not load jar file from artifact");
-	}
+        if (artifact.getType().equals("pom")) {
+            return false;
+        }
+        try (JarFile artifactJar = new JarFile(artifact.getFile())) {
+            JarEntry webFragmentFile = artifactJar.getJarEntry("META-INF/web-fragment.xml");
+            return webFragmentFile != null;
+        } catch (IOException ex) {
+            throw new MojoExecutionException("Could not load jar file from artifact");
+        }
     }
 
     private int getIndentation(String template, int i) {
-	return i - template.lastIndexOf(NEW_LINE_CHAR, i);
+        return i - template.lastIndexOf(NEW_LINE_CHAR, i);
     }
 }
