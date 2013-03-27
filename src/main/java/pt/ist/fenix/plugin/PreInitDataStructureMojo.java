@@ -1,4 +1,4 @@
-package pt.ist.bennu.plugin;
+package pt.ist.fenix.plugin;
 
 /**
  * Pre Init Data Structure

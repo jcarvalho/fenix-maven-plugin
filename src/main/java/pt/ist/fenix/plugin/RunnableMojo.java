@@ -1,4 +1,4 @@
-package pt.ist.bennu.plugin;
+package pt.ist.fenix.plugin;
 
 import java.io.File;
 import java.lang.reflect.Method;

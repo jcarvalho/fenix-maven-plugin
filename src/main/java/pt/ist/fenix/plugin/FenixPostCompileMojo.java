@@ -1,4 +1,4 @@
-package pt.ist.bennu.plugin;
+package pt.ist.fenix.plugin;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,7 +26,7 @@ import org.apache.maven.project.MavenProject;
  * 
  * @requiresDependencyResolution runtime
  */
-public class BennuPostCompileMojo extends AbstractMojo {
+public class FenixPostCompileMojo extends AbstractMojo {
     /**
      * Maven Project
      * 
